@@ -110,7 +110,7 @@ func (uc *orderUseCase) Cancel(ctx context.Context, userID, orderID string) (*do
 		if o.UserID != userID {
 			return domain.ErrOrderNotOwned
 		}
-		if o.Status != domain.OrderStatusPending {
+		if !o.Status.CanBeCancelled() {
 			return domain.ErrOrderNotCancelable
 		}
 

@@ -14,6 +14,12 @@ const (
 	OrderStatusCancelled OrderStatus = "CANCELLED"
 )
 
+// CanBeCancelled indica si una orden en este estado puede cancelarse (solo las
+// que están PENDING).
+func (s OrderStatus) CanBeCancelled() bool {
+	return s == OrderStatusPending
+}
+
 // OrderItem es una línea de la orden. Guarda unitPrice como foto del precio al
 // momento de la compra (no se recalcula si el producto cambia de precio después).
 type OrderItem struct {

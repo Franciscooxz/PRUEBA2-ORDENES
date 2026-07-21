@@ -1,5 +1,5 @@
-# Levanta PostgreSQL para la API de órdenes.
-# (El servicio de la app se añade junto con el Dockerfile en la fase final.)
+# Levanta la API de órdenes junto con PostgreSQL.
+# La app aplica migraciones y siembra productos automáticamente al arrancar.
 services:
   db:
     image: postgres:18-alpine
@@ -16,6 +16,19 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@db:5432/wind_orders?sslmode=disable"
+      JWT_SECRET: "dev-secret-cambia-en-produccion"
+      JWT_EXPIRATION: "24h"
+      PORT: "8080"
+    ports:
+      - "8080:8080"
 
 volumes:
   pgdata:

@@ -46,6 +46,11 @@ func main() {
 	}
 	defer pool.Close()
 
+	// Catálogo inicial de productos si la base está vacía.
+	if err := postgres.SeedProducts(context.Background(), pool); err != nil {
+		log.Fatalf("seed: %v", err)
+	}
+
 	// Repositorios, servicios y transacción.
 	users := postgres.NewUserRepository(pool)
 	products := postgres.NewProductRepository(pool)

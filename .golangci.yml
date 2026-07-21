@@ -1,0 +1,15 @@
+# Configuración de golangci-lint.
+# El código generado por gqlgen (con cabecera "Code generated ... DO NOT EDIT")
+# lo omite golangci-lint automáticamente.
+run:
+  timeout: 3m
+
+linters:
+  enable:
+    - errcheck      # errores sin comprobar
+    - govet         # análisis estático estándar
+    - ineffassign   # asignaciones inútiles
+    - staticcheck   # conjunto amplio de chequeos
+    - unused        # código sin usar
+  # No se usa misspell: el código está documentado en español y ese linter solo
+  # entiende inglés (marcaría "producto", "inventario", etc. como erratas).

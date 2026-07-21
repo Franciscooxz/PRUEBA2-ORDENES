@@ -3,8 +3,6 @@ package usecase
 import (
 	"context"
 	"errors"
-	"net/mail"
-	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -27,12 +25,12 @@ func NewAuthUseCase(users domain.UserRepository, tokens domain.TokenService) Aut
 }
 
 func (uc *authUseCase) Register(ctx context.Context, email, password string) (string, *domain.User, error) {
-	email = normalizeEmail(email)
-	if !validEmail(email) {
-		return "", nil, domain.ErrInvalidEmail
+	email = domain.NormalizeEmail(email)
+	if err := domain.ValidateEmail(email); err != nil {
+		return "", nil, err
 	}
-	if len(password) < 8 {
-		return "", nil, domain.ErrWeakPassword
+	if err := domain.ValidatePassword(password); err != nil {
+		return "", nil, err
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -53,7 +51,7 @@ func (uc *authUseCase) Register(ctx context.Context, email, password string) (st
 }
 
 func (uc *authUseCase) Login(ctx context.Context, email, password string) (string, *domain.User, error) {
-	email = normalizeEmail(email)
+	email = domain.NormalizeEmail(email)
 
 	u, err := uc.users.FindByEmail(ctx, email)
 	if err != nil {
@@ -74,15 +72,4 @@ func (uc *authUseCase) Login(ctx context.Context, email, password string) (strin
 		return "", nil, err
 	}
 	return token, u, nil
-}
-
-func normalizeEmail(email string) string {
-	return strings.ToLower(strings.TrimSpace(email))
-}
-
-// validEmail acepta solo una dirección simple (rechaza formatos como
-// "Nombre <a@b.com>").
-func validEmail(email string) bool {
-	addr, err := mail.ParseAddress(email)
-	return err == nil && addr.Address == email
 }
