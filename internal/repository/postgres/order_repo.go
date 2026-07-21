@@ -111,6 +111,11 @@ func (r *OrderRepository) ListByUser(ctx context.Context, userID string, offset,
 	if err := rows.Err(); err != nil {
 		return nil, 0, err
 	}
+	// Cerramos rows para liberar la conexión ANTES de la siguiente consulta.
+	// Si no, mantener el result-set abierto mientras itemsForOrders pide otra
+	// conexión puede agotar el pool y bloquearse bajo concurrencia. Close es
+	// idempotente, así que el defer posterior queda como no-op.
+	rows.Close()
 
 	// Carga todos los ítems de la página en una sola consulta (evita N+1 aquí).
 	itemsByOrder, err := r.itemsForOrders(ctx, q, ids)
@@ -147,7 +152,7 @@ func (r *OrderRepository) itemsForOrders(ctx context.Context, q querier, orderID
 	}
 	rows, err := q.Query(ctx,
 		`SELECT order_id::text, product_id::text, quantity, unit_price::float8
-		 FROM order_items WHERE order_id = ANY($1::uuid[])`,
+		 FROM order_items WHERE order_id = ANY($1::uuid[]) ORDER BY id`,
 		orderIDs)
 	if err != nil {
 		return nil, err

@@ -18,10 +18,12 @@ var userIDKey contextKey
 // el userID en el context. NO rechaza las peticiones sin token: eso lo deciden
 // los resolvers (así register/login pueden ser públicos y el resto exigir sesión).
 func Auth(tokens domain.TokenService) func(http.Handler) http.Handler {
+	const prefix = "bearer " // el esquema es case-insensitive (RFC 6750)
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if raw, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer "); ok {
-				if userID, err := tokens.Verify(strings.TrimSpace(raw)); err == nil {
+			header := r.Header.Get("Authorization")
+			if len(header) > len(prefix) && strings.EqualFold(header[:len(prefix)], prefix) {
+				if userID, err := tokens.Verify(strings.TrimSpace(header[len(prefix):])); err == nil {
 					r = r.WithContext(context.WithValue(r.Context(), userIDKey, userID))
 				}
 			}

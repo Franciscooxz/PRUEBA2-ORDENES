@@ -69,7 +69,11 @@ func (r *mutationResolver) CancelOrder(ctx context.Context, id string) (*domain.
 func (r *orderResolver) User(ctx context.Context, obj *domain.Order) (*domain.User, error) {
 	// Vía DataLoader: las cargas de usuario de la misma petición se agrupan en
 	// una sola consulta (evita N+1).
-	user, err := dataloader.For(ctx).UserByID.Load(ctx, obj.UserID)
+	loaders := dataloader.For(ctx)
+	if loaders == nil {
+		return nil, toGraphQLError(errors.New("dataloaders no inicializados en el context"))
+	}
+	user, err := loaders.UserByID.Load(ctx, obj.UserID)
 	if err != nil {
 		return nil, toGraphQLError(err)
 	}
@@ -85,7 +89,11 @@ func (r *orderResolver) CreatedAt(ctx context.Context, obj *domain.Order) (strin
 func (r *orderItemResolver) Product(ctx context.Context, obj *domain.OrderItem) (*domain.Product, error) {
 	// Vía DataLoader: las cargas de producto de la misma petición se agrupan en
 	// una sola consulta (evita N+1).
-	product, err := dataloader.For(ctx).ProductByID.Load(ctx, obj.ProductID)
+	loaders := dataloader.For(ctx)
+	if loaders == nil {
+		return nil, toGraphQLError(errors.New("dataloaders no inicializados en el context"))
+	}
+	product, err := loaders.ProductByID.Load(ctx, obj.ProductID)
 	if err != nil {
 		return nil, toGraphQLError(err)
 	}

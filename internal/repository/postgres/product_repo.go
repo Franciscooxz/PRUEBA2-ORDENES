@@ -72,7 +72,9 @@ func (r *ProductRepository) List(ctx context.Context, f domain.ProductFilter, of
 	if f.Name != nil {
 		n++
 		conds = append(conds, fmt.Sprintf("name ILIKE $%d", n))
-		args = append(args, "%"+*f.Name+"%")
+		// Escapamos los metacaracteres de ILIKE (%, _) para que se busquen como
+		// texto literal y no como comodines.
+		args = append(args, "%"+escapeLike(*f.Name)+"%")
 	}
 	if f.MinPrice != nil {
 		n++
@@ -149,4 +151,14 @@ func (r *ProductRepository) IncrementStock(ctx context.Context, productID string
 		return domain.ErrProductNotFound
 	}
 	return nil
+}
+
+// escapeLike escapa los metacaracteres de LIKE/ILIKE (\, %, _) para que el
+// texto del usuario se busque literal. PostgreSQL usa \ como carácter de escape
+// por defecto.
+func escapeLike(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, "%", `\%`)
+	s = strings.ReplaceAll(s, "_", `\_`)
+	return s
 }
