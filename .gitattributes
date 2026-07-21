@@ -1,2 +1,6 @@
 # Normaliza los finales de línea: en el repositorio siempre LF.
 * text=auto eol=lf
+
+# Marca el código generado por gqlgen (para diffs/linguist).
+internal/delivery/graphql/generated/generated.go linguist-generated=true
+internal/delivery/graphql/model/models_gen.go     linguist-generated=true
