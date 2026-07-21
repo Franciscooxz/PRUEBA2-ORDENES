@@ -26,6 +26,9 @@ type ProductFilter struct {
 type ProductRepository interface {
 	// FindByID devuelve ErrProductNotFound si no existe.
 	FindByID(ctx context.Context, id string) (*Product, error)
+	// FindByIDs devuelve los productos pedidos indexados por ID (carga por lotes
+	// para el DataLoader).
+	FindByIDs(ctx context.Context, ids []string) (map[string]*Product, error)
 	// List devuelve una página de productos y el total que cumple el filtro.
 	List(ctx context.Context, filter ProductFilter, offset, limit int) (items []*Product, total int, err error)
 	// DecrementStock resta cantidad al stock; devuelve ErrInsufficientStock si

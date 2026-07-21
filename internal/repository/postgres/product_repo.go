@@ -38,6 +38,30 @@ func (r *ProductRepository) FindByID(ctx context.Context, id string) (*domain.Pr
 	return &p, nil
 }
 
+func (r *ProductRepository) FindByIDs(ctx context.Context, ids []string) (map[string]*domain.Product, error) {
+	result := make(map[string]*domain.Product, len(ids))
+	if len(ids) == 0 {
+		return result, nil
+	}
+	q := querierFrom(ctx, r.pool)
+	rows, err := q.Query(ctx,
+		`SELECT id::text, name, price::float8, stock FROM products WHERE id = ANY($1::uuid[])`,
+		ids,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var p domain.Product
+		if err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock); err != nil {
+			return nil, err
+		}
+		result[p.ID] = &p
+	}
+	return result, rows.Err()
+}
+
 func (r *ProductRepository) List(ctx context.Context, f domain.ProductFilter, offset, limit int) ([]*domain.Product, int, error) {
 	q := querierFrom(ctx, r.pool)
 

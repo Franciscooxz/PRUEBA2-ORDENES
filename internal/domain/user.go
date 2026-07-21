@@ -22,4 +22,7 @@ type UserRepository interface {
 	FindByEmail(ctx context.Context, email string) (*User, error)
 	// FindByID devuelve ErrUserNotFound si no existe.
 	FindByID(ctx context.Context, id string) (*User, error)
+	// FindByIDs devuelve los usuarios pedidos indexados por ID (carga por lotes
+	// para el DataLoader). Los IDs inexistentes simplemente no aparecen en el mapa.
+	FindByIDs(ctx context.Context, ids []string) (map[string]*User, error)
 }

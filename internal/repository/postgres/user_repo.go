@@ -46,6 +46,30 @@ func (r *UserRepository) FindByID(ctx context.Context, id string) (*domain.User,
 	return r.findBy(ctx, "id = $1::uuid", id)
 }
 
+func (r *UserRepository) FindByIDs(ctx context.Context, ids []string) (map[string]*domain.User, error) {
+	result := make(map[string]*domain.User, len(ids))
+	if len(ids) == 0 {
+		return result, nil
+	}
+	q := querierFrom(ctx, r.pool)
+	rows, err := q.Query(ctx,
+		`SELECT id::text, email, password_hash, created_at FROM users WHERE id = ANY($1::uuid[])`,
+		ids,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var u domain.User
+		if err := rows.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.CreatedAt); err != nil {
+			return nil, err
+		}
+		result[u.ID] = &u
+	}
+	return result, rows.Err()
+}
+
 func (r *UserRepository) findBy(ctx context.Context, cond string, arg any) (*domain.User, error) {
 	q := querierFrom(ctx, r.pool)
 	var u domain.User

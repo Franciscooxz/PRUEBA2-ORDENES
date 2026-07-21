@@ -22,6 +22,7 @@ import (
 	"ordersapi/internal/auth"
 	"ordersapi/internal/config"
 	graphqldelivery "ordersapi/internal/delivery/graphql"
+	"ordersapi/internal/delivery/graphql/dataloader"
 	"ordersapi/internal/delivery/graphql/generated"
 	"ordersapi/internal/delivery/graphql/middleware"
 	"ordersapi/internal/repository/postgres"
@@ -61,7 +62,6 @@ func main() {
 		AuthUC:    authUC,
 		ProductUC: productUC,
 		OrderUC:   orderUC,
-		Users:     users,
 	}
 
 	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
@@ -74,9 +74,9 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("/", playground.Handler("Órdenes GraphQL", "/query"))
-	// El middleware de auth envuelve el endpoint: si hay token válido, deja el
-	// userID en el context para los resolvers.
-	mux.Handle("/query", middleware.Auth(tokens)(srv))
+	// El endpoint pasa por dos middlewares: los DataLoaders (por petición) y la
+	// autenticación (que deja el userID en el context si el token es válido).
+	mux.Handle("/query", middleware.Auth(tokens)(dataloader.Middleware(users, products)(srv)))
 
 	httpServer := &http.Server{
 		Addr:              ":" + cfg.Port,

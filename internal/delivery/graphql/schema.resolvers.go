@@ -10,6 +10,7 @@ import (
 	"errors"
 	"time"
 
+	"ordersapi/internal/delivery/graphql/dataloader"
 	"ordersapi/internal/delivery/graphql/generated"
 	"ordersapi/internal/delivery/graphql/model"
 	"ordersapi/internal/domain"
@@ -66,8 +67,9 @@ func (r *mutationResolver) CancelOrder(ctx context.Context, id string) (*domain.
 
 // User is the resolver for the user field.
 func (r *orderResolver) User(ctx context.Context, obj *domain.Order) (*domain.User, error) {
-	// Carga directa (en la fase de DataLoader se agrupa por lotes para evitar N+1).
-	user, err := r.Users.FindByID(ctx, obj.UserID)
+	// Vía DataLoader: las cargas de usuario de la misma petición se agrupan en
+	// una sola consulta (evita N+1).
+	user, err := dataloader.For(ctx).UserByID.Load(ctx, obj.UserID)
 	if err != nil {
 		return nil, toGraphQLError(err)
 	}
@@ -81,8 +83,9 @@ func (r *orderResolver) CreatedAt(ctx context.Context, obj *domain.Order) (strin
 
 // Product is the resolver for the product field.
 func (r *orderItemResolver) Product(ctx context.Context, obj *domain.OrderItem) (*domain.Product, error) {
-	// Carga directa (en la fase de DataLoader se agrupa por lotes para evitar N+1).
-	product, err := r.ProductUC.Get(ctx, obj.ProductID)
+	// Vía DataLoader: las cargas de producto de la misma petición se agrupan en
+	// una sola consulta (evita N+1).
+	product, err := dataloader.For(ctx).ProductByID.Load(ctx, obj.ProductID)
 	if err != nil {
 		return nil, toGraphQLError(err)
 	}
