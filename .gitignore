@@ -1,0 +1,24 @@
+# Binarios compilados
+/server
+/ordersapi
+*.exe
+*.exe~
+*.dll
+*.test
+
+# Cobertura y salida de tests
+*.out
+coverage.*
+
+# Variables de entorno (contienen credenciales de la base de datos)
+.env
+.env.local
+.env.*.local
+
+# Editores / IDE
+.idea/
+.vscode/
+*.swp
+
+# Dependencias vendorizadas
+/vendor/

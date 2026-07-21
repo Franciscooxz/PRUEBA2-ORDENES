@@ -1,0 +1,113 @@
+# Esquema GraphQL de la API de órdenes. Contrato del que gqlgen genera el código
+# del servidor (ver gqlgen.yml).
+
+# ----- Entidades -----
+
+type User {
+  id: ID!
+  email: String!
+  createdAt: String!
+}
+
+type Product {
+  id: ID!
+  name: String!
+  price: Float!
+  stock: Int!
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+type OrderItem {
+  product: Product!
+  quantity: Int!
+  "Precio del producto al momento de crear la orden (histórico)."
+  unitPrice: Float!
+}
+
+type Order {
+  id: ID!
+  user: User!
+  items: [OrderItem!]!
+  total: Float!
+  status: OrderStatus!
+  createdAt: String!
+}
+
+# ----- Autenticación -----
+
+input RegisterInput {
+  email: String!
+  password: String!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+"Token JWT + usuario autenticado."
+type AuthPayload {
+  token: String!
+  user: User!
+}
+
+# ----- Productos (listado paginado con filtro) -----
+
+input ProductFilter {
+  name: String
+  minPrice: Float
+  maxPrice: Float
+}
+
+type ProductPage {
+  items: [Product!]!
+  page: Int!
+  pageSize: Int!
+  total: Int!
+}
+
+# ----- Órdenes -----
+
+input OrderItemInput {
+  productId: ID!
+  quantity: Int!
+}
+
+input CreateOrderInput {
+  items: [OrderItemInput!]!
+}
+
+type OrderPage {
+  items: [Order!]!
+  page: Int!
+  pageSize: Int!
+  total: Int!
+}
+
+# ----- Operaciones -----
+# register y login son públicas; el resto requiere token válido en el header
+# Authorization: Bearer <token>.
+
+type Query {
+  "Listado paginado de productos, con filtro por nombre y rango de precio."
+  products(filter: ProductFilter, page: Int, pageSize: Int): ProductPage!
+  product(id: ID!): Product
+  "Órdenes del usuario autenticado."
+  myOrders(page: Int, pageSize: Int): OrderPage!
+  "Detalle de una orden; solo si pertenece al usuario autenticado."
+  order(id: ID!): Order
+}
+
+type Mutation {
+  register(input: RegisterInput!): AuthPayload!
+  login(input: LoginInput!): AuthPayload!
+  "Crea una orden validando y descontando stock en una sola transacción."
+  createOrder(input: CreateOrderInput!): Order!
+  "Cancela una orden PENDING y restaura el stock."
+  cancelOrder(id: ID!): Order!
+}
